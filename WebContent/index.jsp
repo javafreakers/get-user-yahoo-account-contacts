@@ -4,7 +4,7 @@
 </head>
 <body>
 <%
-String YAHOO_API_Key = "dj0yJmk9VmQxQjBNblJjdlY2JmQ9WVdrOWRuVXlSbWswTXpZbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD00Ng--";
+String YAHOO_API_Key = "your App consumer key--";
 String CALLBACK_URI = "http://localhost:8080/Yahoo_Contact_Import/yahooContacts.jsp";
 String domainName = "http://localhost:8080";
 String openIdAuthUrl = "https://open.login.yahooapis.com/openid/op/auth?"+

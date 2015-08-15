@@ -16,10 +16,10 @@
 <%@page import="org.apache.commons.httpclient.HttpClient"%>
 <%@page import="org.apache.commons.httpclient.NameValuePair"%>
 <%
-String YAHOO_API_Key = "dj0yJmk9VmQxQjBNblJjdlY2JmQ9WVdrOWRuVXlSbWswTXpZbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD00Ng--";
+String YAHOO_API_Key = "your App consumer key--";
 String CALLBACK_URI = "http://localhost:8080/Yahoo_Contact_Import/yahooContacts.jsp";
 String domainName = "http://localhost:8080";
-String YAHOO_API_SECRET = "6cc1455edbb2005aa3488bee822b7074d8ba0b41";
+String YAHOO_API_SECRET = "your App client secret";
 %>
 <%
     try {
@@ -38,6 +38,9 @@ String YAHOO_API_SECRET = "6cc1455edbb2005aa3488bee822b7074d8ba0b41";
                             request.getParameter("openid.oauth.request_token")),
                     new NameValuePair("grant_type",
                             "authorization_code"),
+                             /* add & at the endof API_SECRET 
+                              if we are using PLANETEXT oauth_signature_method 
+                             or add %26 if we are using HSA oauth_signature_method */
                     new NameValuePair("oauth_signature", YAHOO_API_SECRET+"&") };
         
             HttpClient client = new HttpClient();
@@ -56,21 +59,32 @@ String YAHOO_API_SECRET = "6cc1455edbb2005aa3488bee822b7074d8ba0b41";
             while ((str = b.readLine()) != null) {
                 sb.append(str);
             }
+            /* converting resposse into json object for convenience 
+            Here we may also get some error beacuse yahoo server return Cycle prohibited response some time. 
+            		But this error comes only 5% as we have used openId for authentication process
+            		which reduces chances of such error. So if you get any such error dont be panic. 
+            		And one more thing for motivation is that it comes only on localhsot. It won't occur on remote server*/
+            		System.out.println(sb.toString());
             JSONObject access_token = new JSONObject("{"+sb.toString().replaceAll("=", ":").replaceAll("&", ",")+"}");
              OAuthService service1 = new ServiceBuilder()
              .provider(YahooApi.class)
-             .apiKey("dj0yJmk9VmQxQjBNblJjdlY2JmQ9WVdrOWRuVXlSbWswTXpZbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD00Ng--")
-             .apiSecret("6cc1455edbb2005aa3488bee822b7074d8ba0b41")
+             .apiKey(YAHOO_API_Key)
+             .apiSecret(YAHOO_API_SECRET)
              .build();
+             /* encoding =(equal) of oauth_token otherwise it will give problem .*/
             String tk=access_token.getString("oauth_token").replaceAll("%3D", "=");
             Token token1 =new Token(tk,access_token.getString("oauth_token_secret"));
-    
+   			 /* request to YAHOO CONTACT API */
             OAuthRequest request1 = new OAuthRequest(Verb.GET,"https://social.yahooapis.com/v1/user/"+access_token.getString("xoauth_yahoo_guid")+"/contacts");
-                    
             service1.signRequest(token1, request1);
                     request1.addHeader("realm", "yahooapis.com");
                     Response response1 = request1.send();
+                    /*converting response into json object for convenience. The response is in xml formate. 
+                    I always like to use json so i converted response in json. 
+                    Using json is much easier then using xml formate*/
                     JSONObject jsonObject = XML.toJSONObject(response1.getBody().trim());
+                    		/*getting contacts array from json object . 
+                    		You can also print this object to see what are the fields returned */
                     JSONArray jsonArray = jsonObject.getJSONObject("contacts").getJSONArray("contact");
                     for (int i = 0; i < jsonArray.length(); i++) {
                         if (jsonArray.getJSONObject(i).getJSONArray("fields")
